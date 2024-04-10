@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import signal
 import os
@@ -12,7 +14,7 @@ import sip
 import soundfile as sf
 
 
-class WBFM_STARSV(gr.top_block, Qt.QWidget):
+class trans_hackrf(gr.top_block, Qt.QWidget):
 
     def __init__(self, wav_file):
         gr.top_block.__init__(self, "Transmission Window", catch_exceptions=True)
@@ -97,7 +99,7 @@ class WBFM_STARSV(gr.top_block, Qt.QWidget):
 
     def closeEvent(self, event):
         self.process.terminate()  # Terminate subprocess on closing the GUI
-        self.settings = Qt.QSettings("GNU Radio", "WBFM_STARSV")
+        self.settings = Qt.QSettings("GNU Radio", "trans_hackrf")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -127,12 +129,12 @@ def get_audio_length(wav_file):
     with wave.open(wav_file, 'rb') as wf:
         return wf.getnframes() / wf.getframerate()
 
-def main(top_block_cls=WBFM_STARSV, options=None):
+def main(top_block_cls=trans_hackrf, options=None):
     qapp = Qt.QApplication(sys.argv)
 
     # Parse command line arguments
     if len(sys.argv) != 2:
-        print("Usage: python3 WBFM_STARSV.py <path_to_wav_file>")
+        print("Usage: python3 trans_hackrf.py <path_to_wav_file>")
         sys.exit(1)
 
     wav_file = sys.argv[1]

@@ -9,6 +9,7 @@ import socket
 import tkinter as tk
 import rec_chat as rc
 import time
+import os
 
 server_mode = 0
 client_mode = 0
@@ -24,17 +25,18 @@ def start_client_thread():
     client_thread.start()
 
 def start_hackrf_thread(type):
-    server_thread = threading.Thread(target=type)
-    server_thread.daemon = True
-    server_thread.start()
+    hackrf_thread = threading.Thread(target=type)
+    hackrf_thread.daemon = True
+    hackrf_thread.start()
 
 
 def hackrf_logic_tx():
-    trans_hackrf
+    os.system('pwd')
+    os.system('./DeceptionAutomation/trans_hackrf.py /home/cranky/deceptionautomation/DeceptionAutomation/transfer/1.wav') 
     
 
 def hackrf_logic_rx():
-    hackrf_rx
+    os.system('hackrf_rx.py') 
     
 
 def server_logic():
@@ -53,7 +55,9 @@ def server_logic():
             conn.sendall(b'Hello from server!')
 
             while True:
+                
                 checkmode(server_mode,client_mode)
+                start_hackrf_thread(hackrf_logic_tx)
                 data = conn.recv(1024)
                 if data == b'ack':
                     changemode()
@@ -71,6 +75,7 @@ def client_logic():
 
         while True:
             checkmode(server_mode,client_mode)
+            start_hackrf_thread(hackrf_logic_rx)
             time.sleep(15)
             changemode()
             s.sendall(b'ack')
