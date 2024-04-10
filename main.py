@@ -46,25 +46,34 @@ def server_logic():
             # Placeholder for server logic
             # For demonstration purposes, sending a message to the client
             conn.sendall(b'Hello from server!')
-            checkmode(server_mode)
+            checkmode(server_mode, client_mode)
             time.sleep(10)
-            conn.sendall(b'ack')
-            changemode(server_mode,client_mode)
+            #conn.sendall(b'ack')
+            changemode(s)
+            data = conn.recv(1024)
+            print("recd", repr(data))
+            if data.decode("utf-8") == 'ack':
+                changemode(conn)
         
-        checkmode(server_mode)
+
+            
+        
+        checkmode(server_mode, client_mode)
+
+        
             
 
 
-def checkmode(flag):
-    if flag ==1:
+def checkmode(flag1, flag2):
+    if ((flag1 ==1) and (flag2 ==0)):
         print("Tx Mode")
-    else:
+    elif ((flag1 ==0) and (flag2 ==1)):
         print("Rx Mode")
 
 # Function to handle client logic
 def client_logic():
     # Placeholder for client logic
-    HOST = '127.0.0.1'  # Server's IP address
+    HOST = '172.20.10.6'  # Server's IP address
     PORT = 65432        # Port to connect to
 
     # Initialize client socket
@@ -76,28 +85,33 @@ def client_logic():
         # For demonstration purposes, receiving a message from the server
         data = s.recv(1024)
         print('Received', repr(data))
-        checkmode(client_mode)
+        checkmode(server_mode,client_mode)
         
-        while data:
-            print("recd", repr(data))
-            data = s.recv(1024)
-            if data.decode("utf-8") is 'ack':
-                changemode(server_mode,client_mode)
+        data = s.recv(1024)
+        print("recd", repr(data))
+        if data.decode("utf-8") == 'ack':
+            changemode(s)
         
-        checkmode(client_mode)
+        checkmode(server_mode,client_mode)
+
+        time.sleep(15)
+        changemode(s)
 
     
         
 
-def changemode(sm,cm):
-    server_logic.conn.sendall("Change the mode.")
-    if sm ==1 and cm ==0:
+def changemode(conn):
+    conn.sendall(b'ack')
+    global server_mode, client_mode
+
+    if server_mode == 1 and client_mode == 0:
         server_mode = 0
         client_mode = 1
-    else:
+    elif server_mode == 0 and client_mode == 1:
         server_mode = 1
         client_mode = 0
-
+    else:
+        print('Error: Invalid mode configuration')
     print("modes changed")
 
 
