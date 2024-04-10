@@ -8,8 +8,10 @@ from rx_rf import receive_rf
 import socket
 import tkinter as tk
 import rec_chat as rc
+import time
 
-mode = 0
+server_mode = 0
+client_mode = 0
 
 
 # Function to start the server in a daemon thread
@@ -44,7 +46,13 @@ def server_logic():
             # Placeholder for server logic
             # For demonstration purposes, sending a message to the client
             conn.sendall(b'Hello from server!')
-            print("present mode is: ", checkmode(mode))
+            checkmode(server_mode)
+            time.sleep(10)
+            conn.sendall(b'ack')
+            changemode(server_mode,client_mode)
+        
+        checkmode(server_mode)
+            
 
 
 def checkmode(flag):
@@ -68,7 +76,30 @@ def client_logic():
         # For demonstration purposes, receiving a message from the server
         data = s.recv(1024)
         print('Received', repr(data))
-        checkmode(mode)
+        checkmode(client_mode)
+        
+        while data:
+            print("recd", repr(data))
+            data = s.recv(1024)
+            if data.decode("utf-8") is 'ack':
+                changemode(server_mode,client_mode)
+        
+        checkmode(client_mode)
+
+    
+        
+
+def changemode(sm,cm):
+    server_logic.conn.sendall("Change the mode.")
+    if sm ==1 and cm ==0:
+        server_mode = 0
+        client_mode = 1
+    else:
+        server_mode = 1
+        client_mode = 0
+
+    print("modes changed")
+
 
 def rec_logic():
     client_thread = threading.Thread(target=rc.rx_files)
@@ -93,7 +124,7 @@ while True:
         break
     elif event == 'Submit':
         if values['local']:
-            mode = 1
+            server_mode = 1
             local_layout = [
                 [sg.Text("Local Mode Options:")],
                 [sg.Button('Generate Chat'), sg.Button('Send Chat Audio'), sg.Button('Start Deception Program'), sg.Button('Exit')],
@@ -112,6 +143,7 @@ while True:
                     start_server_thread()
 
         elif values['remote']:
+            client_mode = 1
             start_client_thread()
             rec_logic()
 
