@@ -1,25 +1,27 @@
-import os
 import socket
-from tkinter import filedialog
-import tkinter as tk
+import time
+import os
 
+SERVER_HOST = '172.20.10.6'  # Change to your server IP
+SERVER_PORT = 12345  # Change to your server port
 
-
-# Function to receive files and save them along with folder name
 def rx_files():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('192.20.10.6', 1234))
-        s.listen()
-        conn, addr = s.accept()
-        with conn:
-            folder_name = conn.recv(1024).decode()
-            os.makedirs(folder_name, exist_ok=True)
-            while True:
-                data = conn.recv(1024)
-                if not data:
-                    break
-                file_name = os.path.basename(data)
-                file_path = os.path.join(folder_name, file_name)
-                with open(file_path, 'wb') as f:
-                    f.write(data)
-
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((SERVER_HOST, SERVER_PORT))
+    print("Connected to server")
+    
+    folder_path = ".\\received_files"
+    
+    while True:
+        file_size_data = client_socket.recv(1024)
+        if not file_size_data:
+            break
+        file_size = int(file_size_data.decode())
+        received = 0
+        with open(os.path.join(folder_path, f"received_{time.time()}.wav"), 'wb') as file:
+            while received < file_size:
+                data = client_socket.recv(1024)
+                file.write(data)
+                received += len(data)
+    
+    print("Files received successfully")
