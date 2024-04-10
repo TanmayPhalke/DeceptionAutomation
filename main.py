@@ -9,6 +9,8 @@ import socket
 import tkinter as tk
 import rec_chat as rc
 
+mode = 0
+
 
 # Function to start the server in a daemon thread
 def start_server_thread():
@@ -26,7 +28,7 @@ def start_client_thread():
 # Function to handle server logic
 def server_logic():
     # Placeholder for server logic
-    HOST = '127.0.0.1'  # Server's IP address
+    HOST = '172.20.10.6'  # Server's IP address
     PORT = 65432        # Port to listen on
 
     # Initialize server socket
@@ -42,6 +44,14 @@ def server_logic():
             # Placeholder for server logic
             # For demonstration purposes, sending a message to the client
             conn.sendall(b'Hello from server!')
+            print("present mode is: ", checkmode(mode))
+
+
+def checkmode(flag):
+    if flag ==1:
+        print("Tx Mode")
+    else:
+        print("Rx Mode")
 
 # Function to handle client logic
 def client_logic():
@@ -58,6 +68,7 @@ def client_logic():
         # For demonstration purposes, receiving a message from the server
         data = s.recv(1024)
         print('Received', repr(data))
+        checkmode(mode)
 
 def rec_logic():
     client_thread = threading.Thread(target=rc.rx_files)
@@ -82,6 +93,7 @@ while True:
         break
     elif event == 'Submit':
         if values['local']:
+            mode = 1
             local_layout = [
                 [sg.Text("Local Mode Options:")],
                 [sg.Button('Generate Chat'), sg.Button('Send Chat Audio'), sg.Button('Start Deception Program'), sg.Button('Exit')],
@@ -98,6 +110,7 @@ while True:
                     send_chat()
                 elif local_event == 'Start Deception Program':
                     start_server_thread()
+
         elif values['remote']:
             start_client_thread()
             rec_logic()

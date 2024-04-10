@@ -1,66 +1,42 @@
 import os
 import socket
-import time
+import zipfile
 from tkinter import Tk, filedialog
 
-SERVER_HOST = '127.0.0.1'  # Change to your server IP
-SERVER_PORT = 12345  # Change to your server port
+# Sender's IP address and port
+SENDER_HOST = '172.20.10.4'  # Change to sender's IP address
+SENDER_PORT = 65431  # Change to sender's port
+BUFFER_SIZE = 1024  # Buffer size for sending data
 
-def transfer_files():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((SERVER_HOST, SERVER_PORT))
-    server_socket.listen(5)  # Listen for up to 5 connections
-    print("Server listening on port", SERVER_PORT)
-    
-    while True:
-        conn, addr = server_socket.accept()
-        print("Connection established with", addr)
-        
-        root = Tk()
-        root.withdraw()
-        folder_path = filedialog.askdirectory(title="Select folder to transfer")
-        root.destroy()
-        
-        for filename in os.listdir(folder_path):
-            if filename.endswith(".wav"):
-                file_path = os.path.join(folder_path, filename)
-                file_size = os.path.getsize(file_path)
-                conn.sendall(str(file_size).encode())  # Send file size first
-                with open(file_path, 'rb') as file:
-                    while True:
-                        data = file.read(1024)
-                        if not data:
-                            break
-                        conn.sendall(data)
-        
-        print("Files sent successfully")
-        conn.close()
+def zip_folder(folder_path, zip_path):
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
 
-def receive_files():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((SERVER_HOST, SERVER_PORT))
-    print("Connected to server")
-    
+def send_zip(zip_path):
+    print("Sending zip file...")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((SENDER_HOST, SENDER_PORT))
+        
+        with open(zip_path, 'rb') as file:
+            data = file.read(BUFFER_SIZE)
+            while data:
+                s.send(data)
+                data = file.read(BUFFER_SIZE)
+        print("Zip file sent successfully.")
+
+def select_and_send_folder():
     root = Tk()
     root.withdraw()
-    folder_path = filedialog.askdirectory(title="Select folder to receive files")
+    folder_path = filedialog.askdirectory(title="Select folder to send")
     root.destroy()
     
-    while True:
-        file_size_data = client_socket.recv(1024)
-        if not file_size_data:
-            break
-        file_size = int(file_size_data.decode())
-        received = 0
-        with open(os.path.join(folder_path, f"received_{time.time()}.wav"), 'wb') as file:
-            while received < file_size:
-                data = client_socket.recv(1024)
-                file.write(data)
-                received += len(data)
+    zip_path = folder_path + '.zip'
+    zip_folder(folder_path, zip_path)
+    print("Folder zipped successfully.")
     
-    print("Files received successfully")
+    send_zip(zip_path)
 
 # Example usage:
-# Run transfer_files on the sender side and receive_files on the receiver side.
-
-transfer_files()
+select_and_send_folder()
