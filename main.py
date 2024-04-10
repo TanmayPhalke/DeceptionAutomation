@@ -1,3 +1,4 @@
+from tkinter import filedialog
 import PySimpleGUI as sg
 import threading
 from generate import generate_chat
@@ -5,6 +6,9 @@ from send_chat import send_chat
 from trans_rf import transmit_rf
 from rx_rf import receive_rf
 import socket
+import tkinter as tk
+import rec_chat as rc
+
 
 # Function to start the server in a daemon thread
 def start_server_thread():
@@ -17,6 +21,7 @@ def start_client_thread():
     client_thread = threading.Thread(target=client_logic)
     client_thread.daemon = True
     client_thread.start()
+
 
 # Function to handle server logic
 def server_logic():
@@ -47,11 +52,18 @@ def client_logic():
     # Initialize client socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
+        
 
         # Placeholder for client logic
         # For demonstration purposes, receiving a message from the server
         data = s.recv(1024)
         print('Received', repr(data))
+
+def rec_logic():
+    client_thread = threading.Thread(target=rc.rx_files)
+    client_thread.daemon = True
+    client_thread.start()
+
 
 # GUI layout
 layout = [
@@ -88,5 +100,6 @@ while True:
                     start_server_thread()
         elif values['remote']:
             start_client_thread()
+            rec_logic()
 
 window.close()
